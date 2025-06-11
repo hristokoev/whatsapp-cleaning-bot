@@ -70,36 +70,73 @@ const formatDate = (dateString) => {
     year: "numeric",
     month: "long",
     day: "numeric",
-    timeZone: "UTC",
+    timeZone: "Europe/Prague",
   };
   return date.toLocaleDateString("en-US", options);
 };
 
 // Helper function to check if message is from allowed location
-const isAllowedLocation = (message) => {
-  const isDirectMessage = !message.isGroupMsg;
-  const isFromGroup = message.isGroupMsg;
+const isAllowedLocation = async (message) => {
+  try {
+    // Get chat info to properly determine if it's a group
+    const chat = await message.getChat();
+    const isFromGroup = chat.isGroup;
+    const isDirectMessage = !chat.isGroup;
 
-  // Check direct messages first
-  if (isDirectMessage) {
-    return ALLOW_DIRECT_MESSAGES;
-  }
+    console.log("🔍 Location check:", {
+      from: message.from,
+      isDirectMessage,
+      isFromGroup,
+      chatType: chat.isGroup ? "group" : "direct",
+      ALLOW_DIRECT_MESSAGES,
+      ALLOWED_GROUPS,
+      "ALLOWED_GROUPS.length": ALLOWED_GROUPS.length,
+    });
 
-  // Check group messages
-  if (isFromGroup) {
-    // If no group restrictions set, allow all groups
-    if (ALLOWED_GROUPS.length === 0) {
-      return true; // No group restrictions, allow all groups
+    // Check direct messages first
+    if (isDirectMessage) {
+      console.log(
+        `📱 Direct message check: ALLOW_DIRECT_MESSAGES = ${ALLOW_DIRECT_MESSAGES}`
+      );
+      return ALLOW_DIRECT_MESSAGES;
     }
 
-    // Check if this group is in the allowed list
-    const groupId = message.from;
-    return ALLOWED_GROUPS.some((allowedGroup) =>
-      groupId.includes(allowedGroup)
-    );
-  }
+    // Check group messages
+    if (isFromGroup) {
+      // If no group restrictions set, allow all groups
+      if (ALLOWED_GROUPS.length === 0) {
+        console.log("👥 Group message: No restrictions, allowing all groups");
+        return true; // No group restrictions, allow all groups
+      }
 
-  return false; // Fallback
+      // Check if this group is in the allowed list
+      const groupId = message.from;
+      const isAllowed = ALLOWED_GROUPS.some((allowedGroup) =>
+        groupId.includes(allowedGroup)
+      );
+      console.log(
+        `👥 Group message: Checking ${groupId} against ${ALLOWED_GROUPS}, result: ${isAllowed}`
+      );
+      return isAllowed;
+    }
+
+    console.log("❌ Unknown message type, blocking");
+    return false; // Fallback
+  } catch (error) {
+    console.error("❌ Error checking message location:", error);
+    // Fallback to ID-based detection if getChat() fails
+    const isFromGroup = message.from.endsWith("@g.us");
+    const isDirectMessage = message.from.endsWith("@c.us");
+
+    if (isDirectMessage) return ALLOW_DIRECT_MESSAGES;
+    if (isFromGroup && ALLOWED_GROUPS.length === 0) return true;
+    if (isFromGroup)
+      return ALLOWED_GROUPS.some((allowedGroup) =>
+        message.from.includes(allowedGroup)
+      );
+
+    return false;
+  }
 };
 
 // Command handlers
@@ -109,11 +146,14 @@ const handleCurrentCommand = async () => {
 
     const startDate = formatDate(data.periodStart);
     const endDate = formatDate(data.periodEnd);
+    const isActive = data.isActive ? "✅ Active" : "⏸️ Not Active";
 
     return (
       `🧹 *Current Cleaning Schedule*\n\n` +
       `👤 *${data.currentPerson}* is responsible\n` +
-      `📅 ${startDate} - ${endDate}\n`
+      `📅 Period: ${startDate} - ${endDate}\n` +
+      `🔄 Rotation #${data.rotationNumber}\n` +
+      `📊 Status: ${isActive}`
     );
   } catch (error) {
     return `❌ Error getting current schedule: ${error.message}`;
@@ -288,9 +328,10 @@ client.on("message", async (message) => {
   }
 
   // Check if message is from allowed location (group/DM restrictions)
-  if (!isAllowedLocation(message)) {
+  const isAllowed = await isAllowedLocation(message);
+  if (!isAllowed) {
     console.log(
-      `🚫 Ignoring message from restricted location: ${message.from} (Group: ${message.isGroupMsg})`
+      `🚫 Ignoring message from restricted location: ${message.from}`
     );
     return;
   }
