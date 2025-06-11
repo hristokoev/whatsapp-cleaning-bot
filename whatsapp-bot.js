@@ -10,6 +10,10 @@ const AUTHORIZED_NUMBERS = process.env.AUTHORIZED_NUMBERS
   ? process.env.AUTHORIZED_NUMBERS.split(",").map((num) => num.trim())
   : [];
 const COMMAND_PREFIX = process.env.COMMAND_PREFIX || "!"; // Default to '!' but configurable
+const ALLOWED_GROUPS = process.env.ALLOWED_GROUPS
+  ? process.env.ALLOWED_GROUPS.split(",").map((group) => group.trim())
+  : [];
+const ALLOW_DIRECT_MESSAGES = process.env.ALLOW_DIRECT_MESSAGES === "true";
 
 // Create WhatsApp client
 const client = new Client({
@@ -71,10 +75,35 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString("en-US", options);
 };
 
-// Helper function to check if user is authorized for admin commands
-const isAuthorized = (number) => {
-  if (AUTHORIZED_NUMBERS.length === 0) return true; // If no restriction set, allow all
-  return AUTHORIZED_NUMBERS.some((authNum) => number.includes(authNum));
+// Helper function to check if message is from allowed location
+const isAllowedLocation = (message) => {
+  const isDirectMessage = !message.isGroupMsg;
+  const isFromGroup = message.isGroupMsg;
+
+  // If no group restrictions set, allow everything
+  if (ALLOWED_GROUPS.length === 0 && !ALLOW_DIRECT_MESSAGES) {
+    return true; // No restrictions
+  }
+
+  // Check direct messages
+  if (isDirectMessage) {
+    return ALLOW_DIRECT_MESSAGES;
+  }
+
+  // Check group messages
+  if (isFromGroup) {
+    if (ALLOWED_GROUPS.length === 0) {
+      return true; // No group restrictions, allow all groups
+    }
+
+    // Check if this group is in the allowed list
+    const groupId = message.from;
+    return ALLOWED_GROUPS.some((allowedGroup) =>
+      groupId.includes(allowedGroup)
+    );
+  }
+
+  return false;
 };
 
 // Command handlers
@@ -229,6 +258,14 @@ client.on("ready", () => {
     }`
   );
   console.log(`⚡ Command prefix: ${COMMAND_PREFIX}`);
+  console.log(
+    `📱 Direct messages: ${ALLOW_DIRECT_MESSAGES ? "Allowed" : "Blocked"}`
+  );
+  console.log(
+    `🏠 Allowed groups: ${
+      ALLOWED_GROUPS.length > 0 ? ALLOWED_GROUPS.join(", ") : "All groups"
+    }`
+  );
 });
 
 // Event: Authentication success
@@ -246,6 +283,12 @@ client.on("disconnected", (reason) => {
   console.log("📴 WhatsApp disconnected:", reason);
 });
 
+// Helper function to check if user is authorized for admin commands
+const isAuthorized = (number) => {
+  if (AUTHORIZED_NUMBERS.length === 0) return true; // If no restriction set, allow all
+  return AUTHORIZED_NUMBERS.some((authNum) => number.includes(authNum));
+};
+
 // Event: Message received
 client.on("message", async (message) => {
   // Skip if message is from status broadcast
@@ -255,6 +298,14 @@ client.on("message", async (message) => {
 
   // Skip if message is not text
   if (message.type !== "chat") {
+    return;
+  }
+
+  // Check if message is from allowed location (group/DM restrictions)
+  if (!isAllowedLocation(message)) {
+    console.log(
+      `🚫 Ignoring message from restricted location: ${message.from} (Group: ${message.isGroupMsg})`
+    );
     return;
   }
 
