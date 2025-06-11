@@ -174,6 +174,5 @@ whatsapp-bot/
 
 - **Group Chats**: The bot works in group chats too - great for family/roommate groups!
 - **Multiple Commands**: Users can send multiple commands in sequence
-- **Timezone**: All dates are displayed in Prague timezone automatically
 - **Persistent**: The bot remembers the WhatsApp session, so you don't need to scan QR every time
 - **Lightweight**: Uses minimal resources and can run 24/7 on a Raspberry Pi

@@ -70,7 +70,7 @@ const formatDate = (dateString) => {
     year: "numeric",
     month: "long",
     day: "numeric",
-    timeZone: "Europe/Prague",
+    timeZone: "UTC",
   };
   return date.toLocaleDateString("en-US", options);
 };
@@ -220,7 +220,6 @@ const handleHelpCommand = () => {
     `• \`${COMMAND_PREFIX}update people Robb, Daenerys, Jon\` - Update people list\n` +
     `• \`${COMMAND_PREFIX}update date 2024-03-17\` - Update start date\n\n` +
     `💡 *Tips:*\n` +
-    `• All dates are shown in Prague timezone\n` +
     `• Each person cleans for exactly 2 weeks\n` +
     `• Rotation goes Monday to Sunday`
   );
