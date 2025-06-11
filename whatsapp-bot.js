@@ -80,18 +80,14 @@ const isAllowedLocation = (message) => {
   const isDirectMessage = !message.isGroupMsg;
   const isFromGroup = message.isGroupMsg;
 
-  // If no group restrictions set, allow everything
-  if (ALLOWED_GROUPS.length === 0 && !ALLOW_DIRECT_MESSAGES) {
-    return true; // No restrictions
-  }
-
-  // Check direct messages
+  // Check direct messages first
   if (isDirectMessage) {
     return ALLOW_DIRECT_MESSAGES;
   }
 
   // Check group messages
   if (isFromGroup) {
+    // If no group restrictions set, allow all groups
     if (ALLOWED_GROUPS.length === 0) {
       return true; // No group restrictions, allow all groups
     }
@@ -103,7 +99,7 @@ const isAllowedLocation = (message) => {
     );
   }
 
-  return false;
+  return false; // Fallback
 };
 
 // Command handlers
