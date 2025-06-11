@@ -113,14 +113,11 @@ const handleCurrentCommand = async () => {
 
     const startDate = formatDate(data.periodStart);
     const endDate = formatDate(data.periodEnd);
-    const isActive = data.isActive ? "✅ Active" : "⏸️ Not Active";
 
     return (
       `🧹 *Current Cleaning Schedule*\n\n` +
       `👤 *${data.currentPerson}* is responsible\n` +
-      `📅 Period: ${startDate} - ${endDate}\n` +
-      `🔄 Rotation #${data.rotationNumber}\n` +
-      `📊 Status: ${isActive}`
+      `📅 ${startDate} - ${endDate}\n`
     );
   } catch (error) {
     return `❌ Error getting current schedule: ${error.message}`;
@@ -138,17 +135,14 @@ const handleScheduleCommand = async () => {
     // Current rotation
     const current = data.currentRotation;
     message += `🎯 *Current: ${current.currentPerson}*\n`;
-    message += `Period: ${formatDate(current.periodStart)} - ${formatDate(
+    message += `${formatDate(current.periodStart)} - ${formatDate(
       current.periodEnd
     )}\n\n`;
 
     // Upcoming rotations
     message += `🔮 *Upcoming Rotations:*\n`;
     data.upcomingRotations.slice(0, 3).forEach((rotation, index) => {
-      const emoji = index === 0 ? "⏭️" : index === 1 ? "⏩" : "⏸️";
-      message += `${emoji} ${rotation.person}: ${formatDate(
-        rotation.periodStart
-      )}\n`;
+      message += `${rotation.person}: ${formatDate(rotation.periodStart)}\n`;
     });
 
     return message;
@@ -164,13 +158,10 @@ const handleUpcomingCommand = async () => {
     let message = `🔮 *Upcoming Cleaning Rotations*\n\n`;
 
     data.upcomingRotations.forEach((rotation, index) => {
-      const emoji =
-        index === 0 ? "⏭️" : index === 1 ? "⏩" : index === 2 ? "⏸️" : "⏹️";
-      message += `${emoji} *${rotation.person}*\n`;
-      message += `   📅 ${formatDate(rotation.periodStart)} - ${formatDate(
+      message += `*${rotation.person}*\n`;
+      message += `📅 ${formatDate(rotation.periodStart)} - ${formatDate(
         rotation.periodEnd
       )}\n`;
-      message += `   🔄 Rotation #${rotation.rotationNumber}\n\n`;
     });
 
     return message;
@@ -320,7 +311,35 @@ client.on("message", async (message) => {
   // Remove prefix and convert to lowercase for command matching
   const command = content.slice(COMMAND_PREFIX.length).toLowerCase().trim();
 
-  console.log(`📨 Command from ${senderNumber}: "${COMMAND_PREFIX}${command}"`);
+  // List of valid commands
+  const validCommands = [
+    "test",
+    "ping",
+    "current",
+    "who",
+    "now",
+    "schedule",
+    "all",
+    "upcoming",
+    "next",
+    "help",
+    "commands",
+  ];
+
+  // Check for admin commands
+  const isUpdateCommand =
+    command.startsWith("update people ") || command.startsWith("update date ");
+  const isValidCommand = validCommands.includes(command) || isUpdateCommand;
+
+  // If not a valid command, ignore silently
+  if (!isValidCommand) {
+    console.log(`🤐 Ignoring invalid command: "${COMMAND_PREFIX}${command}"`);
+    return;
+  }
+
+  console.log(
+    `📨 Valid command from ${senderNumber}: "${COMMAND_PREFIX}${command}"`
+  );
 
   let response = "";
 
