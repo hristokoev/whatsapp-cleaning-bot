@@ -1,0 +1,31 @@
+{
+  "name": "whatsapp-cleaning-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp bot for cleaning schedule management",
+  "main": "whatsapp-bot.js",
+  "scripts": {
+    "start": "node whatsapp-bot.js",
+    "dev": "nodemon whatsapp-bot.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "cleaning",
+    "schedule",
+    "automation"
+  ],
+  "author": "Hristo Koev",
+  "license": "MIT",
+  "dependencies": {
+    "whatsapp-web.js": "^1.23.0",
+    "qrcode-terminal": "^0.12.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

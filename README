@@ -1,0 +1,179 @@
+# WhatsApp Cleaning Schedule Bot Setup
+
+## Prerequisites
+
+1. **Node.js 16+** installed on your Linux machine
+2. **Your cleaning schedule API** running (locally or deployed)
+3. **WhatsApp account** to link the bot to
+
+## Installation Steps
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Environment Configuration
+
+1. Copy `.env.example` to `.env`
+2. Update the configuration:
+   ```bash
+   API_BASE_URL=http://localhost:3000/api  # Your API URL
+   API_KEY=your-super-secret-api-key-here  # Same key as your API
+   AUTHORIZED_NUMBERS=+420123456789,+420987654321  # Optional: restrict admin commands
+   ```
+
+### 3. Start the Bot
+
+```bash
+npm start
+```
+
+### 4. Link WhatsApp Account
+
+1. A QR code will appear in your terminal
+2. Open WhatsApp on your phone
+3. Go to **Settings → Linked Devices → Link a Device**
+4. Scan the QR code
+5. Wait for "WhatsApp bot is ready!" message
+
+## Bot Commands
+
+### 📋 Public Commands (Anyone can use)
+
+- `current` or `now` - Who's cleaning now?
+- `schedule` or `all` - Full schedule overview
+- `upcoming` or `next` - Next few rotations
+- `help` - Show available commands
+
+### 🔐 Admin Commands (Authorized numbers only)
+
+- `update people Robb, Daenerys, Jon, Arya` - Update people list
+- `update date 2024-03-17` - Update start date
+
+## Example Conversations
+
+**User:** `current`
+**Bot:**
+
+```
+🧹 Current Cleaning Schedule
+
+👤 Marco is responsible
+📅 Period: Monday, June 9, 2025 - Sunday, June 22, 2025
+🔄 Rotation #7
+📊 Status: ✅ Active
+```
+
+**User:** `upcoming`
+**Bot:**
+
+```
+🔮 Upcoming Cleaning Rotations
+
+⏭️ Robb
+   📅 Monday, June 23, 2025 - Sunday, July 6, 2025
+   🔄 Rotation #8
+
+⏩ Daenerys
+   📅 Monday, July 7, 2025 - Sunday, July 20, 2025
+   🔄 Rotation #9
+```
+
+## Security Features
+
+1. **API Key Protection**: Admin commands require the same API key as your cleaning API
+2. **Phone Number Authorization**: Optionally restrict admin commands to specific phone numbers
+3. **Read-only Public Access**: Anyone can check schedules, but only authorized users can modify
+
+## Running as a Service (Linux)
+
+Create a systemd service to run the bot automatically:
+
+### 1. Create service file
+
+```bash
+sudo nano /etc/systemd/system/whatsapp-cleaning-bot.service
+```
+
+### 2. Add service configuration
+
+```ini
+[Unit]
+Description=WhatsApp Cleaning Schedule Bot
+After=network.target
+
+[Service]
+Type=simple
+User=your-username
+WorkingDirectory=/path/to/your/whatsapp-bot
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node whatsapp-bot.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 3. Enable and start service
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable whatsapp-cleaning-bot
+sudo systemctl start whatsapp-cleaning-bot
+```
+
+### 4. Check status
+
+```bash
+sudo systemctl status whatsapp-cleaning-bot
+sudo journalctl -u whatsapp-cleaning-bot -f
+```
+
+## Troubleshooting
+
+### Bot doesn't respond
+
+- Check if API is running: `curl http://localhost:3000/api/health`
+- Verify API_KEY in .env matches your API
+- Check bot logs for errors
+
+### QR Code doesn't work
+
+- Make sure your phone has internet connection
+- Try restarting the bot
+- Clear WhatsApp cache if needed
+
+### Admin commands don't work
+
+- Check if your phone number is in AUTHORIZED_NUMBERS
+- Verify API_KEY is correct for protected endpoints
+- Make sure you're using exact command format
+
+### Session expires
+
+- The bot stores session in `.wwebjs_auth/` folder
+- Delete this folder and restart to re-link your account
+- Sessions usually last several weeks
+
+## File Structure
+
+```
+whatsapp-bot/
+├── whatsapp-bot.js     # Main bot file
+├── package.json        # Dependencies
+├── .env               # Configuration (create from .env.example)
+├── .env.example       # Example configuration
+├── .wwebjs_auth/      # WhatsApp session data (auto-created)
+└── README.md          # This file
+```
+
+## Tips
+
+- **Group Chats**: The bot works in group chats too - great for family/roommate groups!
+- **Multiple Commands**: Users can send multiple commands in sequence
+- **Timezone**: All dates are displayed in Prague timezone automatically
+- **Persistent**: The bot remembers the WhatsApp session, so you don't need to scan QR every time
+- **Lightweight**: Uses minimal resources and can run 24/7 on a Raspberry Pi
