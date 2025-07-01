@@ -146,14 +146,11 @@ const handleCurrentCommand = async () => {
 
     const startDate = formatDate(data.periodStart);
     const endDate = formatDate(data.periodEnd);
-    const isActive = data.isActive ? "✅ Active" : "⏸️ Not Active";
 
     return (
       `🧹 *Current Cleaning Schedule*\n\n` +
       `👤 *${data.currentPerson}* is responsible\n` +
-      `📅 Period: ${startDate} - ${endDate}\n` +
-      `🔄 Rotation #${data.rotationNumber}\n` +
-      `📊 Status: ${isActive}`
+      `📅 Period: ${startDate} - ${endDate}\n`
     );
   } catch (error) {
     return `❌ Error getting current schedule: ${error.message}`;
