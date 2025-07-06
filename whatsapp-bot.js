@@ -203,6 +203,28 @@ const handleUpcomingCommand = async () => {
   }
 };
 
+const handleTrashCommand = async () => {
+  try {
+    const data = await callAPI("/current");
+
+    const trashMessages = [
+      `🗑️ *Trash Reminder*\n\n*${data.currentPerson}*, don't forget to take out the trash! 🚮`,
+      `🗑️ *Hey ${data.currentPerson}!*\n\nTime to empty the trash bins! 🚮✨`,
+      `🗑️ *Trash Alert!*\n\n*${data.currentPerson}*, the trash is ready for pickup! 🚛`,
+      `🗑️ *Friendly Reminder*\n\n*${data.currentPerson}*, please take care of the trash when you get a chance! 🙏`,
+      `🗑️ *${data.currentPerson}*\n\nThe trash bins are calling your name! 📞🗑️`,
+    ];
+
+    // Pick a random message
+    const randomMessage =
+      trashMessages[Math.floor(Math.random() * trashMessages.length)];
+
+    return randomMessage;
+  } catch (error) {
+    return `❌ Error getting current person for trash reminder: ${error.message}`;
+  }
+};
+
 const handleUpdatePeopleCommand = async (peopleString) => {
   try {
     const people = peopleString
@@ -248,13 +270,15 @@ const handleHelpCommand = () => {
     `• \`${COMMAND_PREFIX}current\` - Who's cleaning now?\n` +
     `• \`${COMMAND_PREFIX}schedule\` - Full schedule overview\n` +
     `• \`${COMMAND_PREFIX}upcoming\` - Next rotations\n` +
+    `• \`${COMMAND_PREFIX}trash\` - Remind current person about trash\n` +
     `• \`${COMMAND_PREFIX}help\` - Show this help\n\n` +
     `🔐 *Admin Commands:*\n` +
     `• \`${COMMAND_PREFIX}update people Robb, Daenerys, Jon\` - Update people list\n` +
     `• \`${COMMAND_PREFIX}update date 2024-03-17\` - Update start date\n\n` +
     `💡 *Tips:*\n` +
     `• Each person cleans for exactly 2 weeks\n` +
-    `• Rotation goes Monday to Sunday`
+    `• Rotation goes Monday to Sunday\n` +
+    `• Use \`${COMMAND_PREFIX}trash\` to send a friendly reminder!`
   );
 };
 
@@ -355,6 +379,7 @@ client.on("message", async (message) => {
     "all",
     "upcoming",
     "next",
+    "trash",
     "help",
     "commands",
   ];
@@ -388,6 +413,8 @@ client.on("message", async (message) => {
       response = await handleScheduleCommand();
     } else if (command === "upcoming" || command === "next") {
       response = await handleUpcomingCommand();
+    } else if (command === "trash") {
+      response = await handleTrashCommand();
     } else if (command === "help" || command === "commands") {
       response = handleHelpCommand();
     }
